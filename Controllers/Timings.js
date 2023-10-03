@@ -10,7 +10,10 @@ async function get_timings(req,res)
         res.status(500).send('Error retrieving data');
         return;
       }
-        res.json(results);
+      const data = {
+        routes: results,
+      };
+        res.status(200).json(data);
     });
 }
 async function add_timings(req, res) {

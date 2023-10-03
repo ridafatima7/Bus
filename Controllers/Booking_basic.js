@@ -10,7 +10,10 @@ async function get_bookings(req,res)
         res.status(500).send('Error retrieving data');
         return;
       }
-        res.json(results);
+      const data = {
+        bookings_basic_info: results, 
+      };
+        res.status(200).json(data);
     });
 }
 async function add_booking(req,res,next)
@@ -28,9 +31,9 @@ async function add_booking(req,res,next)
 }
 async function delete_booking(req,res)
 {
-    const { id } = req.query;
+    const {booking_id} = req.query;
     const query = 'DELETE FROM bookings_basic_info WHERE  booking_id = ?';
-    connection.query(query, [id], (error, results) => 
+    connection.query(query, [booking_id], (error, results) => 
     {
         if (error) 
         {
@@ -56,7 +59,7 @@ async function update_booking(req, res)
       res.status(500).send('Error updating data');
       return;
     }
-    res.send(updateResults);
+    res.send('data updated !');
   }
 );
 }
