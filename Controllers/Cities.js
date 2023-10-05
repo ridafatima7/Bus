@@ -19,10 +19,10 @@ async function get_data(req,res)
 async function totalRoutes(req,res)
 {
     const selectQuery = `
-      SELECT cities.id, cities.name, routes.terminal, COUNT(*) as routes
+      SELECT cities.id AS city_id, cities.name AS city_name, COUNT(routes.id) AS route_count
       FROM cities
-      JOIN routes ON cities.id = routes.cityId
-      GROUP BY cities.id, cities.name, routes.terminal
+      LEFT JOIN routes ON cities.id = routes.cityId
+      GROUP BY cities.id, cities.name;
     `;
   
     connection.query(selectQuery, (selectError, selectResults) => {
@@ -35,28 +35,23 @@ async function totalRoutes(req,res)
       const responseData = {};
   
       selectResults.forEach((result) => {
-        const cityId = result.id;
-        const cityName = result.name;
-        const terminal = result.terminal;
+        const cityId = result.city_id;
+        const cityName = result.city_name;
+        const routeCount = result.route_count;
   
-        if (!responseData[cityId]) {
-          responseData[cityId] = 
-          {
-            id: cityId,
-            name: cityName,
-            terminals: [],
-          };
-        }
-  
-        responseData[cityId].terminals.push({
-          terminal: terminal
-        });
+        responseData[cityId] = {
+          id: cityId,
+          name: cityName,
+          routes: routeCount,
+        };
       });
   
       const responseObject = { data: Object.values(responseData) };
       res.status(200).json(responseObject);
     });
   }
+  
+
   
 async function add_data(req,res,next)
 {
@@ -80,7 +75,7 @@ async function delete_data(req,res)
         if (error) 
         {
           console.error('Error executing query: ' + error.message);
-          res.status(500).send('Error deleting data');
+          res.status(500).send('Error delet ing data');
           return;
         }
         res.send('Data deleted successfully!');

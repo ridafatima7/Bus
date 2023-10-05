@@ -81,62 +81,97 @@ async function update_price(req, res)
    
   }
   async function getdata(req, res) {
-  try {
-     //  SELECT timings.*, routes.*, routes_price.*
-      //  FROM timings
-      //  JOIN routes_price ON timings.routeId = routes_price.route_id
-      //  JOIN routes ON  timings.routeId = routes.id; 
-    //   routes.id AS id,
-    // routes.cityId AS cityId,
-    // routes.image AS image,
-    // routes.name AS name,
-    // routes.days AS days,
-    // routes.address AS address,
-    // routes.phone AS phone,
-    // routes.terminal AS terminal,
-    // 0 AS is_schedule,
-    // routes.date_from AS date_from,
-    // routes.date_to AS date_to,  
-    const query = `
-     SELECT 
-    routes.*,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'id', timings.id,
-            'places', timings.places,
-            'routeId', timings.routeId,
-            'time_from', timings.time_from,
-            'time_to', timings.time_to
-        )
-    ) AS timings,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'id', routes_price.id,
-            'desc', routes_price.desc,
-            'price', routes_price.price,
-            'route_id', routes_price.route_id
-        )
-    ) AS routes_price
- FROM routes
- LEFT JOIN timings ON routes.id = timings.routeId
- LEFT JOIN routes_price ON routes.id = routes_price.route_id
- GROUP BY routes.id;
-
+    try {
+      // const query = `
+      //   SELECT 
+      //     routes.*,
+      //     JSON_ARRAYAGG(
+      //       JSON_OBJECT(
+      //         'id', timings.id,
+      //         'places', timings.places,
+      //         'routeId', timings.routeId,
+      //         'time_from', timings.time_from,
+      //         'time_to', timings.time_to
+      //       )
+      //     ) AS timings,
+      //     JSON_ARRAYAGG(
+      //       JSON_OBJECT(
+      //         'id', routes_price.id,
+      //         'desc', routes_price.desc,
+      //         'price', routes_price.price,
+      //         'route_id', routes_price.route_id
+      //       )
+      //     ) AS routes_price
+      //   FROM routes
+      //   LEFT JOIN timings ON routes.id = timings.routeId
+      //   LEFT JOIN routes_price ON routes.id = routes_price.route_id
+      //   GROUP BY routes.id;
+      // `;
+      const query = `
+      SELECT routes.*, timings.*, routes_price.*
+      FROM routes
+      LEFT JOIN timings ON routes.id = timings.routeId
+      LEFT JOIN routes_price ON routes.id = routes_price.route_id
     `;
-    connection.query(query, (error, results) => {
-      if (error) {
-        console.error('Error executing query: ' + error.message);
-        res.status(500).send('Error retrieving data');
-        return;
-      }
-      res.json(results);
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error retrieving data');
+      connection.query(query, (error, selectResults) => {
+        if (error) {
+          console.error('Error executing query: ' + error.message);
+          res.status(500).send('Error retrieving data');
+          return;
+        }
+        
+        const recordsWithSeats = {};
+        // const recordsWithprices={};
+        selectResults.forEach((result) => {
+          const Id = result.id;
+  
+          if (!recordsWithSeats[Id]) {
+            recordsWithSeats[Id] = {
+              id: result.id,
+              cityId: result.cityId,
+              image: result.image,
+              name: result.name,
+              days: result.days,
+              address: result.address,
+              terminal:result.terminal,
+              active:result.active,
+              cityName:result.cityName,
+              timings: [],
+              pricing: [],
+            };
+          }
+  
+          recordsWithSeats[Id].timings.push({
+            time_id: result.id,
+            places: result.places,
+            time_from: result.time_from,
+            time_to: result.time_to,
+          });
+          // if (!recordsWithprices[Id]) {
+          //   recordsWithprices[Id] = {
+          //     pricing: [],
+          //   };
+          // }
+          recordsWithSeats[Id].pricing.push({
+            id: result.id,
+            desc: result.desc,
+            price: result.price,
+            route_id: result.route_id,
+          });
+        });
+  
+        const responseObj = {
+          recordsWithSeats: recordsWithSeats,
+          // recordsWithprices: recordsWithprices,
+        };
+  
+        res.status(200).json(responseObj);
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Error retrieving data');
+    }
   }
   
-}
-
 
 module.exports={get_price,add_price,delete_price,update_price,getdata}

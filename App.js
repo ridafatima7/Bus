@@ -1,6 +1,9 @@
 const express = require('express');
 const http=require('http');
 const mysql = require('mysql');
+var path = require('path');
+const multer = require('multer');
+
 try {
     const express = require('express');
     console.log('Express.js is installed.');
@@ -40,6 +43,18 @@ app.use('/timings',timings_Router);
 app.use('/bookings',bookings_Router);
 app.use('/book',book_Router);
 app.use('/prices',prices_Router);
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads/'); 
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const extension = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + extension); 
+  },
+});
+
+const upload = multer({ storage });
 const port = process.env.PORT || 4002;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
