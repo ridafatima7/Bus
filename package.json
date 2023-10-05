@@ -10,7 +10,8 @@
   "main": "App.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon App.js"
+    "start": "nodemon App.js",
+    "dev": "nodemon App.js" 
   },
   "keywords": [],
   "author": "",
